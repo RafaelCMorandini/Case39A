@@ -1,0 +1,215 @@
+{
+  "name": "Import ZIP Data to Postgres",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {
+          "headerRow": true
+        }
+      },
+      "id": "4d6c5707-cc95-4db3-b00e-49b8326b3d70",
+      "name": "Read Clientes CSV",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "table": "clientes",
+        "additionalFields": {}
+      },
+      "id": "ca3c208d-c169-4d50-8594-cbcf03406a63",
+      "name": "Insert Clientes",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6a958c71-83bd-4606-885b-7ac5eaa1740c",
+      "name": "Read Contratos CSV",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        16,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "table": "contratos",
+        "additionalFields": {}
+      },
+      "id": "a65a9d04-f722-4a85-bf94-4fd27a8d0ca2",
+      "name": "Insert Contratos",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        224,
+        192
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a1b724a3-4b11-42fe-94df-10c14d67ca56",
+      "name": "Read Leituras CSV",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 1,
+      "position": [
+        0,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "table": "leituras",
+        "additionalFields": {}
+      },
+      "id": "88bfc6b5-b9a2-48cf-92c7-46acbf403507",
+      "name": "Insert Leituras",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        224,
+        384
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "upload-zip",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -448,
+        192
+      ],
+      "id": "6cc181a5-bf85-4c04-81b6-9fd9c73bf2e7",
+      "name": "Webhook",
+      "webhookId": "49e00207-e777-4561-9815-bfda311dcbbf",
+      "notesInFlow": false
+    },
+    {
+      "parameters": {},
+      "id": "b8677b11-9994-4baf-b125-327b7a7df8ab",
+      "name": "Extract ZIP",
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        192
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Read Clientes CSV": {
+      "main": [
+        [
+          {
+            "node": "Insert Clientes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Contratos CSV": {
+      "main": [
+        [
+          {
+            "node": "Insert Contratos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Leituras CSV": {
+      "main": [
+        [
+          {
+            "node": "Insert Leituras",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Extract ZIP",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract ZIP": {
+      "main": [
+        [
+          {
+            "node": "Read Leituras CSV",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Contratos CSV",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Read Clientes CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "c80caf83-25dd-42ae-9462-876aeb58cef2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "809b170c5753efa82ef4fbdd7f69eb25703413a2e3085f1835ef4706e6434381"
+  },
+  "id": "bRklJHHlUW-jKtKgQ1PSd",
+  "tags": []
+}

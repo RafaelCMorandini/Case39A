@@ -1,0 +1,126 @@
+{
+  "name": "Case 39A - Processamento de Consumo",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "case39a-webhook",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH avg_consumo AS (\n    SELECT\n        c.id,\n        c.nome,\n        AVG(l.valor_kwh) as media_consumo\n    FROM clientes c\n    JOIN contratos ct ON c.id = ct.cliente_id\n    JOIN leituras l ON ct.id = l.contrato_id\n    WHERE ct.ativo = TRUE\n      AND l.data_leitura >= CURRENT_DATE - INTERVAL '3 months'\n    GROUP BY c.id, c.nome\n),\nstats AS (\n    SELECT\n        AVG(media_consumo) as media_global,\n        STDDEV(media_consumo) as desvio_global\n    FROM avg_consumo\n)\nSELECT\n    ac.nome,\n    ROUND(ac.media_consumo, 2) as media_consumo,\n    CASE\n        WHEN ac.media_consumo > (s.media_global + 2 * COALESCE(s.desvio_global, 0)) THEN 'outlier_alto'\n        WHEN ac.media_consumo < (s.media_global - 2 * COALESCE(s.desvio_global, 0)) THEN 'outlier_baixo'\n        ELSE 'normal'\n    END as status\nFROM avg_consumo ac, stats s;"
+      },
+      "id": "postgres-query",
+      "name": "Postgres Query",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 1,
+      "position": [
+        680,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "postgres-creds",
+          "name": "Postgres Local"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://api.openai.com/v1/chat/completions",
+        "method": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "gpt-4o-mini"
+            },
+            {
+              "name": "messages",
+              "value": "={{ [\n  {\"role\": \"system\", \"content\": \"Você é um analista de dados de energia. Analise os dados dos clientes, focando nos outliers encontrados. Gere um relatório breve e executivo (max 3 parágrafos) em markdown.\"}, \n  {\"role\": \"user\", \"content\": JSON.stringify($json)}\n] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "openai-llm",
+      "name": "OpenAI LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [
+        900,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "openai-creds",
+          "name": "OpenAI Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"dados_clientes\": {{$node[\"Postgres Query\"].json}},\n  \"relatorio_llm\": {{$json.choices[0].message.content}}\n}",
+        "options": {}
+      },
+      "id": "respond-webhook",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1120,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Query": {
+      "main": [
+        [
+          {
+            "node": "OpenAI LLM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI LLM": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
