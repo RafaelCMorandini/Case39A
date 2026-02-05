@@ -50,7 +50,10 @@ Chame o webhook de processamento para obter o relatório:
 ```bash
 curl.exe -X POST http://localhost:5678/webhook-test/processar-dados
 ```
-Ou insira o link http://localhost:5678/webhook-test/processar-dados no navegador. Após alguns segundos, o relatório será gerado e exibido na tela.
+Ou insira o link no navegador. Após alguns segundos, o relatório será gerado e exibido na tela.
+
+```http://localhost:5678/webhook-test/processar-dados```
+
 ---
 
 ## 📊 Modelagem de Dados (`init.sql`)
