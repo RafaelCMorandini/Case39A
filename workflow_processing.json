@@ -1,47 +1,33 @@
 {
-  "name": "Case 39A - Processamento de Consumo",
+  "name": "Case 39A - Processamento de Dados",
   "nodes": [
     {
       "parameters": {
-        "path": "case39a-webhook",
-        "responseMode": "lastNode",
-        "options": {}
-      },
-      "id": "webhook-trigger",
-      "name": "Webhook",
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [
-        460,
-        300
-      ]
-    },
-    {
-      "parameters": {
         "operation": "executeQuery",
-        "query": "WITH avg_consumo AS (\n    SELECT\n        c.id,\n        c.nome,\n        AVG(l.valor_kwh) as media_consumo\n    FROM clientes c\n    JOIN contratos ct ON c.id = ct.cliente_id\n    JOIN leituras l ON ct.id = l.contrato_id\n    WHERE ct.ativo = TRUE\n      AND l.data_leitura >= CURRENT_DATE - INTERVAL '3 months'\n    GROUP BY c.id, c.nome\n),\nstats AS (\n    SELECT\n        AVG(media_consumo) as media_global,\n        STDDEV(media_consumo) as desvio_global\n    FROM avg_consumo\n)\nSELECT\n    ac.nome,\n    ROUND(ac.media_consumo, 2) as media_consumo,\n    CASE\n        WHEN ac.media_consumo > (s.media_global + 2 * COALESCE(s.desvio_global, 0)) THEN 'outlier_alto'\n        WHEN ac.media_consumo < (s.media_global - 2 * COALESCE(s.desvio_global, 0)) THEN 'outlier_baixo'\n        ELSE 'normal'\n    END as status\nFROM avg_consumo ac, stats s;"
+        "query": "WITH avg_consumo AS (\n    SELECT\n        c.id,\n        c.nome,\n        AVG(l.valor_kwh) AS media_consumo\n    FROM clientes c\n    JOIN contratos ct ON c.id = ct.cliente_id\n    JOIN leituras l ON ct.id = l.contrato_id\n    WHERE ct.ativo = TRUE\n      AND l.data_leitura >= CURRENT_DATE - INTERVAL '3 months'\n    GROUP BY c.id, c.nome\n),\nstats AS (\n    SELECT\n        AVG(media_consumo) AS media_global,\n        STDDEV(media_consumo) AS desvio_global\n    FROM avg_consumo\n)\nSELECT\n    ac.nome,\n    ROUND(ac.media_consumo, 2) AS media_consumo,\n  -- Critério de outlier baseado em Z-score (2 desvios padrão)\n    CASE\n        WHEN ac.media_consumo > (s.media_global + 2 * COALESCE(s.desvio_global, 0))\n            THEN 'outlier_alto'\n        WHEN ac.media_consumo < (s.media_global - 2 * COALESCE(s.desvio_global, 0))\n            THEN 'outlier_baixo'\n        ELSE 'normal'\n    END AS status\nFROM avg_consumo ac\nCROSS JOIN stats s\nORDER BY ac.nome;",
+        "additionalFields": {}
       },
-      "id": "postgres-query",
+      "id": "e6a9cddd-ca03-4622-b2d7-15ba4aa0510a",
       "name": "Postgres Query",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 1,
       "position": [
-        680,
-        300
+        2784,
+        -304
       ],
       "credentials": {
         "postgres": {
-          "id": "postgres-creds",
-          "name": "Postgres Local"
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
         }
       }
     },
     {
       "parameters": {
-        "url": "https://api.openai.com/v1/chat/completions",
         "method": "POST",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
@@ -51,55 +37,62 @@
             },
             {
               "name": "messages",
-              "value": "={{ [\n  {\"role\": \"system\", \"content\": \"Você é um analista de dados de energia. Analise os dados dos clientes, focando nos outliers encontrados. Gere um relatório breve e executivo (max 3 parágrafos) em markdown.\"}, \n  {\"role\": \"user\", \"content\": JSON.stringify($json)}\n] }}"
+              "value": "={{ [\n  {\"role\": \"system\", \"content\": \"Você é um analista de dados de energia. Analise os dados de todos os clientes fornecidos, focando em padrões e nos outliers encontrados. Gere um relatório executivo com exatamente 2 parágrafos em markdown sobre todo o conjunto de dados.\"}, \n  {\"role\": \"user\", \"content\": JSON.stringify($(\"Postgres Query\").all().map(i => i.json))}\n] }}"
             }
           ]
         },
         "options": {}
       },
-      "id": "openai-llm",
+      "id": "49265d15-f112-40e2-83ec-f909badd5533",
       "name": "OpenAI LLM",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 3,
       "position": [
-        900,
-        300
+        3008,
+        -304
       ],
       "credentials": {
-        "httpHeaderAuth": {
-          "id": "openai-creds",
-          "name": "OpenAI Key"
+        "openAiApi": {
+          "id": "gYURz7BsznkqtZHl",
+          "name": "OpenAi account"
         }
       }
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={\n  \"dados_clientes\": {{$node[\"Postgres Query\"].json}},\n  \"relatorio_llm\": {{$json.choices[0].message.content}}\n}",
+        "responseBody": "={{ {\n  \"clientes\": $(\"Postgres Query\").all().map(i => i.json),\n  \"relatorio_final\": $json.choices && $json.choices[0] && $json.choices[0].message\n    ? $json.choices[0].message.content\n    : \"Sem relatório\"\n} }}",
         "options": {}
       },
-      "id": "respond-webhook",
+      "id": "82f8fae0-5c91-4cf8-afa9-cebe19123863",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1120,
-        300
-      ]
+        3232,
+        -304
+      ],
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "path": "processar-dados",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "58655181-ef47-47f4-91ca-aef1d9f04657",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        2560,
+        -304
+      ],
+      "webhookId": "f2cb0f61-8958-471c-86d8-68791d1119d9"
     }
   ],
+  "pinData": {},
   "connections": {
-    "Webhook": {
-      "main": [
-        [
-          {
-            "node": "Postgres Query",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Postgres Query": {
       "main": [
         [
@@ -121,6 +114,29 @@
           }
         ]
       ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Postgres Query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
-  }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "338e0507-4213-41e2-88df-c4b6147d41e9",
+  "meta": {
+    "instanceId": "809b170c5753efa82ef4fbdd7f69eb25703413a2e3085f1835ef4706e6434381"
+  },
+  "id": "5fZr7dgxtwl08BXwuSAWR",
+  "tags": []
 }

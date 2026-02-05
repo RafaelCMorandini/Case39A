@@ -1,10 +1,12 @@
 {
-  "name": "Import ZIP Data to Postgres",
+  "name": "Case 39A - Ingestão de Dados",
   "nodes": [
     {
       "parameters": {
+        "binaryPropertyName": "file_0",
         "options": {
-          "headerRow": true
+          "headerRow": true,
+          "rawData": true
         }
       },
       "id": "4d6c5707-cc95-4db3-b00e-49b8326b3d70",
@@ -19,6 +21,7 @@
     {
       "parameters": {
         "table": "clientes",
+        "columns": "id:int,nome:text",
         "additionalFields": {}
       },
       "id": "ca3c208d-c169-4d50-8594-cbcf03406a63",
@@ -38,7 +41,11 @@
     },
     {
       "parameters": {
-        "options": {}
+        "binaryPropertyName": "file_1",
+        "options": {
+          "headerRow": true,
+          "rawData": true
+        }
       },
       "id": "6a958c71-83bd-4606-885b-7ac5eaa1740c",
       "name": "Read Contratos CSV",
@@ -52,6 +59,7 @@
     {
       "parameters": {
         "table": "contratos",
+        "columns": "id:int,cliente_id:int,data_inicio:date,ativo:boolean",
         "additionalFields": {}
       },
       "id": "a65a9d04-f722-4a85-bf94-4fd27a8d0ca2",
@@ -71,7 +79,11 @@
     },
     {
       "parameters": {
-        "options": {}
+        "binaryPropertyName": "file_2",
+        "options": {
+          "headerRow": true,
+          "rawData": true
+        }
       },
       "id": "a1b724a3-4b11-42fe-94df-10c14d67ca56",
       "name": "Read Leituras CSV",
@@ -85,6 +97,7 @@
     {
       "parameters": {
         "table": "leituras",
+        "columns": "id:int,contrato_id:int,data_leitura:date,valor_kwh:float",
         "additionalFields": {}
       },
       "id": "88bfc6b5-b9a2-48cf-92c7-46acbf403507",
@@ -205,7 +218,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "c80caf83-25dd-42ae-9462-876aeb58cef2",
+  "versionId": "ec519e92-d198-4d69-93e7-e72afca43d52",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "809b170c5753efa82ef4fbdd7f69eb25703413a2e3085f1835ef4706e6434381"
