@@ -2,118 +2,63 @@
   "name": "Case 39A - Ingestão de Dados",
   "nodes": [
     {
+      "parameters": {},
+      "id": "fed290b7-16e8-4098-bdb0-a94b7779599f",
+      "name": "Unzip",
+      "type": "n8n-nodes-base.compression",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        160
+      ]
+    },
+    {
       "parameters": {
         "binaryPropertyName": "file_0",
         "options": {
-          "headerRow": true,
           "rawData": true
         }
       },
-      "id": "4d6c5707-cc95-4db3-b00e-49b8326b3d70",
-      "name": "Read Clientes CSV",
+      "id": "572cc171-111c-4591-ab16-a3ff047ff8a9",
+      "name": "Parse Clientes",
       "type": "n8n-nodes-base.spreadsheetFile",
       "typeVersion": 1,
       "position": [
         0,
         0
       ]
-    },
-    {
-      "parameters": {
-        "table": "clientes",
-        "columns": "id:int,nome:text",
-        "additionalFields": {}
-      },
-      "id": "ca3c208d-c169-4d50-8594-cbcf03406a63",
-      "name": "Insert Clientes",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        224,
-        0
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "7UawrySeNkZcMXeW",
-          "name": "Postgres account"
-        }
-      }
     },
     {
       "parameters": {
         "binaryPropertyName": "file_1",
         "options": {
-          "headerRow": true,
           "rawData": true
         }
       },
-      "id": "6a958c71-83bd-4606-885b-7ac5eaa1740c",
-      "name": "Read Contratos CSV",
+      "id": "6aa3980d-5af3-44cf-a496-c4a4a8e77fb8",
+      "name": "Parse Contratos",
       "type": "n8n-nodes-base.spreadsheetFile",
       "typeVersion": 1,
       "position": [
-        16,
-        192
+        0,
+        160
       ]
-    },
-    {
-      "parameters": {
-        "table": "contratos",
-        "columns": "id:int,cliente_id:int,data_inicio:date,ativo:boolean",
-        "additionalFields": {}
-      },
-      "id": "a65a9d04-f722-4a85-bf94-4fd27a8d0ca2",
-      "name": "Insert Contratos",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        224,
-        192
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "7UawrySeNkZcMXeW",
-          "name": "Postgres account"
-        }
-      }
     },
     {
       "parameters": {
         "binaryPropertyName": "file_2",
         "options": {
-          "headerRow": true,
           "rawData": true
         }
       },
-      "id": "a1b724a3-4b11-42fe-94df-10c14d67ca56",
-      "name": "Read Leituras CSV",
+      "id": "5dd5ebce-fe31-4f68-8aac-61b92cb74191",
+      "name": "Parse Leituras",
       "type": "n8n-nodes-base.spreadsheetFile",
       "typeVersion": 1,
       "position": [
         0,
-        384
+        304
       ]
-    },
-    {
-      "parameters": {
-        "table": "leituras",
-        "columns": "id:int,contrato_id:int,data_leitura:date,valor_kwh:float",
-        "additionalFields": {}
-      },
-      "id": "88bfc6b5-b9a2-48cf-92c7-46acbf403507",
-      "name": "Insert Leituras",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 1,
-      "position": [
-        224,
-        384
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "7UawrySeNkZcMXeW",
-          "name": "Postgres account"
-        }
-      }
     },
     {
       "parameters": {
@@ -124,55 +69,306 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -448,
-        192
+        -800,
+        160
       ],
-      "id": "6cc181a5-bf85-4c04-81b6-9fd9c73bf2e7",
+      "id": "909e2001-1adb-4c3e-90cb-50c2a38efa73",
       "name": "Webhook",
-      "webhookId": "49e00207-e777-4561-9815-bfda311dcbbf",
-      "notesInFlow": false
+      "webhookId": "958d6b8f-0171-4d36-8241-900088ceb234"
     },
     {
-      "parameters": {},
-      "id": "b8677b11-9994-4baf-b125-327b7a7df8ab",
-      "name": "Extract ZIP",
-      "type": "n8n-nodes-base.compression",
-      "typeVersion": 1,
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "value": "public",
+          "mode": "list",
+          "cachedResultName": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "clientes",
+          "mode": "list",
+          "cachedResultName": "clientes"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "nome",
+              "displayName": "nome",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
       "position": [
-        -224,
-        192
-      ]
+        208,
+        0
+      ],
+      "id": "01c0b1ae-85bc-40b9-93c5-b8ed45d934e1",
+      "name": "Insert rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "contratos",
+          "mode": "list",
+          "cachedResultName": "contratos"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "ativo": false,
+            "id": 0,
+            "cliente_id": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "cliente_id",
+              "displayName": "cliente_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_inicio",
+              "displayName": "data_inicio",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ativo",
+              "displayName": "ativo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        160
+      ],
+      "id": "04f3f4ca-028a-4658-ac8a-a9587841f7cc",
+      "name": "Insert rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "leituras",
+          "mode": "list",
+          "cachedResultName": "leituras"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {
+            "id": 0,
+            "contrato_id": 0,
+            "valor_kwh": 0
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "contrato_id",
+              "displayName": "contrato_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "data_leitura",
+              "displayName": "data_leitura",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "valor_kwh",
+              "displayName": "valor_kwh",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "skipOnConflict": true
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        208,
+        304
+      ],
+      "id": "29df20df-fccb-4cfb-96c5-35d7e9203f3d",
+      "name": "Insert rows in a table2",
+      "credentials": {
+        "postgres": {
+          "id": "7UawrySeNkZcMXeW",
+          "name": "Postgres account"
+        }
+      }
     }
   ],
   "pinData": {},
   "connections": {
-    "Read Clientes CSV": {
+    "Unzip": {
       "main": [
         [
           {
-            "node": "Insert Clientes",
+            "node": "Parse Clientes",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parse Contratos",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Parse Leituras",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Read Contratos CSV": {
+    "Parse Clientes": {
       "main": [
         [
           {
-            "node": "Insert Contratos",
+            "node": "Insert rows in a table",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Read Leituras CSV": {
+    "Parse Contratos": {
       "main": [
         [
           {
-            "node": "Insert Leituras",
+            "node": "Insert rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Leituras": {
+      "main": [
+        [
+          {
+            "node": "Insert rows in a table2",
             "type": "main",
             "index": 0
           }
@@ -183,32 +379,16 @@
       "main": [
         [
           {
-            "node": "Extract ZIP",
+            "node": "Unzip",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Extract ZIP": {
+    "Insert rows in a table": {
       "main": [
-        [
-          {
-            "node": "Read Leituras CSV",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Contratos CSV",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Read Clientes CSV",
-            "type": "main",
-            "index": 0
-          }
-        ]
+        []
       ]
     }
   },
@@ -218,11 +398,11 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "ec519e92-d198-4d69-93e7-e72afca43d52",
+  "versionId": "aa81487c-da98-49aa-9f10-1be120a6a2a3",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "809b170c5753efa82ef4fbdd7f69eb25703413a2e3085f1835ef4706e6434381"
   },
-  "id": "bRklJHHlUW-jKtKgQ1PSd",
+  "id": "rjnBIgYfBfAxvz_gy_WnQ",
   "tags": []
 }

@@ -4,7 +4,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "WITH avg_consumo AS (\n    SELECT\n        c.id,\n        c.nome,\n        AVG(l.valor_kwh) AS media_consumo\n    FROM clientes c\n    JOIN contratos ct ON c.id = ct.cliente_id\n    JOIN leituras l ON ct.id = l.contrato_id\n    WHERE ct.ativo = TRUE\n      AND l.data_leitura >= CURRENT_DATE - INTERVAL '3 months'\n    GROUP BY c.id, c.nome\n),\nstats AS (\n    SELECT\n        AVG(media_consumo) AS media_global,\n        STDDEV(media_consumo) AS desvio_global\n    FROM avg_consumo\n)\nSELECT\n    ac.nome,\n    ROUND(ac.media_consumo, 2) AS media_consumo,\n  -- Critério de outlier baseado em Z-score (2 desvios padrão)\n    CASE\n        WHEN ac.media_consumo > (s.media_global + 2 * COALESCE(s.desvio_global, 0))\n            THEN 'outlier_alto'\n        WHEN ac.media_consumo < (s.media_global - 2 * COALESCE(s.desvio_global, 0))\n            THEN 'outlier_baixo'\n        ELSE 'normal'\n    END AS status\nFROM avg_consumo ac\nCROSS JOIN stats s\nORDER BY ac.nome;",
+        "query": "-- Calculo de médias e outliers utilizando transformação logaritmica + IQR. A escolha foi feita devido a alta assimetria do dataset (muitos valores altos)\nWITH avg_consumo AS (\n    SELECT\n        c.id,\n        c.nome,\n        AVG(l.valor_kwh) AS media_consumo\n    FROM clientes c\n    JOIN contratos ct ON c.id = ct.cliente_id\n    JOIN leituras l ON ct.id = l.contrato_id\n    WHERE ct.ativo = TRUE\n      AND l.data_leitura >= CURRENT_DATE - INTERVAL '3 months'\n    GROUP BY c.id, c.nome\n),\nlog_consumo AS (\n    SELECT\n        *,\n        LN(media_consumo) AS log_media_consumo\n    FROM avg_consumo\n),\nquartis AS (\n    SELECT\n        PERCENTILE_CONT(0.25) WITHIN GROUP (ORDER BY log_media_consumo) AS q1,\n        PERCENTILE_CONT(0.75) WITHIN GROUP (ORDER BY log_media_consumo) AS q3\n    FROM log_consumo\n),\nlimites AS (\n    SELECT\n        q1,\n        q3,\n        (q3 - q1) AS iqr,\n        EXP(q1 - 1.5 * (q3 - q1)) AS limite_inferior,  -- volta para escala original\n        EXP(q3 + 1.5 * (q3 - q1)) AS limite_superior   -- volta para escala original\n    FROM quartis\n)\nSELECT\n    lc.nome,\n    ROUND(lc.media_consumo, 2) AS media_consumo,\n    CASE\n        WHEN lc.media_consumo > l.limite_superior THEN 'outlier_alto'\n        WHEN lc.media_consumo < l.limite_inferior THEN 'outlier_baixo'\n        ELSE 'normal'\n    END AS status\nFROM log_consumo lc\nCROSS JOIN limites l\nORDER BY lc.nome;\n\n",
         "additionalFields": {}
       },
       "id": "e6a9cddd-ca03-4622-b2d7-15ba4aa0510a",
@@ -13,7 +13,7 @@
       "typeVersion": 1,
       "position": [
         2784,
-        -304
+        -144
       ],
       "credentials": {
         "postgres": {
@@ -49,7 +49,7 @@
       "typeVersion": 3,
       "position": [
         3008,
-        -304
+        -144
       ],
       "credentials": {
         "openAiApi": {
@@ -57,22 +57,6 @@
           "name": "OpenAi account"
         }
       }
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{ {\n  \"clientes\": $(\"Postgres Query\").all().map(i => i.json),\n  \"relatorio_final\": $json.choices && $json.choices[0] && $json.choices[0].message\n    ? $json.choices[0].message.content\n    : \"Sem relatório\"\n} }}",
-        "options": {}
-      },
-      "id": "82f8fae0-5c91-4cf8-afa9-cebe19123863",
-      "name": "Respond to Webhook",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [
-        3232,
-        -304
-      ],
-      "alwaysOutputData": false
     },
     {
       "parameters": {
@@ -86,9 +70,50 @@
       "typeVersion": 1,
       "position": [
         2560,
-        -304
+        -144
       ],
       "webhookId": "f2cb0f61-8958-471c-86d8-68791d1119d9"
+    },
+    {
+      "parameters": {
+        "jsCode": "return {\n  \"clientes\": $(\"Postgres Query\").all().map(i => i.json),\n  \"relatorio_final\": $json.choices && $json.choices[0] && $json.choices[0].message\n    ? $json.choices[0].message.content\n    : \"Sem relatório\"\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3232,
+        -144
+      ],
+      "id": "a34ad981-78e8-4ba4-97db-4470ee48dcad",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "toJson",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        3456,
+        -144
+      ],
+      "id": "c8eda5b9-793c-438b-aea0-9efb4e37e021",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3680,
+        -144
+      ],
+      "id": "1a8f46a6-86fe-4784-8202-b594f6e9ff65",
+      "name": "Respond to Webhook"
     }
   ],
   "pinData": {},
@@ -108,7 +133,7 @@
       "main": [
         [
           {
-            "node": "Respond to Webhook",
+            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -125,6 +150,28 @@
           }
         ]
       ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -133,7 +180,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "338e0507-4213-41e2-88df-c4b6147d41e9",
+  "versionId": "b6e0d3bf-bd91-4a08-86e2-eaca3740442b",
   "meta": {
     "instanceId": "809b170c5753efa82ef4fbdd7f69eb25703413a2e3085f1835ef4706e6434381"
   },
