@@ -74,5 +74,5 @@ Os dados de consumo energético usados eram extremamente assimétricos (presenç
 ---
 
 ## 🤖 Integração com LLM
-O resultado do processamento é enviado ao modelo `gpt-4o-mini` da OpenAI, que gera um relatório executivo de dois parágrafos analisando os padrões de consumo e os outliers identificados, retornando um arquivo formatado para o usuário.
+O resultado do processamento é enviado ao modelo `gpt-4o-mini` da OpenAI, que gera um relatório executivo de dois parágrafos analisando os padrões de consumo e os outliers identificados, retornado em JSON junto aos dados processados.
 
